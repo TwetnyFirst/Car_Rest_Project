@@ -9,10 +9,10 @@ class CarStatus: # all car statuses
 
 class Car: 
     def __init__(self,brand, model, year, daily_rate): #for example - BMW, X5, 2020, 100 ($/per day)
-        self.brand = brand,
-        self.model = model,
-        self.year = year,
-        self.daily_rate = daily_rate,
+        self.brand = brand
+        self.model = model
+        self.year = year
+        self.daily_rate = daily_rate
         self.status = CarStatus.AVAILABLE
 
     def get_full_name(self): # returns full name of the car
@@ -26,6 +26,8 @@ class Car:
             self.status = new_status
         else:
             raise ValueError(f'Invalid status: {new_status}')
+    def say():
+        return "I am a car"
     
 
 # Class for Customer
@@ -38,5 +40,3 @@ class Customer:
 
     def get_info(self): # returns information about the customer
         return f'Customer: {self.name}, Email: {self.email}, Phone: {self.phone}, License: {self.license_number}'
-    
-    
