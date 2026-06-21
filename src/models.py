@@ -32,11 +32,12 @@ class Car:
 
 # Class for Customer
 class Customer:
-    def __init__(self, name, email, phone, license_number): # for example - John Doe, john.doe@example.com, 123-456-7890, L12345678
+    def __init__(self, name, last_name, email, phone, license_number): # for example - John Doe, john.doe@example.com, 123-456-7890, L12345678
         self.name = name
+        self.last_name = last_name
         self.email = email
         self.phone = phone
         self.license_number = license_number
 
     def get_info(self): # returns information about the customer
-        return f'Customer: {self.name}, Email: {self.email}, Phone: {self.phone}, License: {self.license_number}'
+        return f'Customer: {self.name} {self.last_name}, Email: {self.email}, Phone: {self.phone}, License: {self.license_number}'
