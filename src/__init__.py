@@ -1,3 +1,3 @@
 from .models import Car, Customer
-
-__all__ = ['Car', 'Customer']
+from .services import FleetManager, CustomerRegistry
+__all__ = ['Car', 'Customer', 'FleetManager', 'CustomerRegistry']
