@@ -4,7 +4,6 @@ from src.services import FleetManager, CustomerRegistry
 from src.services import Rental, Invoice, RentalService
 
 class TestRentalProcessUnit(unittest.TestCase):
-    """TESTY JEDNOSTKOWE"""
 
     def setUp(self):
         self.car = Car("BMW", "X5", 2020, 100.0)

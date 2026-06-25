@@ -3,7 +3,6 @@ from src.models import Car, Customer, CarStatus
 from src.services import FleetManager, CustomerRegistry
 from src.services import Rental, Invoice, RentalService
 class TestRentalProcessIntegration(unittest.TestCase):
-    """TESTY INTEGRACYJNE"""
 
     def setUp(self):
         self.fleet_manager = FleetManager()
