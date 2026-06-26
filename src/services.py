@@ -1,0 +1,165 @@
+from models import Car, Customer, CarStatus
+from datetime import datetime
+
+class FleetManager:
+    """
+    Klasa odpowiedzialna za zarządzanie listą samochodów w wypożyczalni.
+    Umożliwia dodawanie, usuwanie oraz zaawansowane filtrowanie aut.
+    """
+    def __init__(self) -> None:
+        self.cars: list[Car] = []
+
+    def add_car(self, car: Car) -> None:
+        """Dodaje nowy samochód do floty."""
+        if not isinstance(car, Car):
+            raise TypeError("Można dodać tylko obiekt klasy Car")
+        self.cars.append(car)
+        
+    def remove_car(self, car: Car) -> None:
+        """Usuwa samochód z floty."""
+        if car in self.cars:
+            self.cars.remove(car)
+        else:
+            raise ValueError("Podany samochód nie znajduje się we flocie")
+
+    def get_available_cars(self) -> list[Car]:
+        """Zwraca listę samochodów, które są aktualnie dostępne."""
+        return [car for car in self.cars if car.status == CarStatus.AVAILABLE]
+
+    def search_by_brand(self, brand: str) -> list[Car]:
+        """Wyszukuje samochody według marki."""
+        return [car for car in self.cars if car.brand.strip().lower() == brand.strip().lower()]
+
+    def get_cars_in_maintenance(self) -> list[Car]:
+        """Zwraca listę samochodów w serwisie."""
+        return [car for car in self.cars if car.status == CarStatus.MAINTENANCE]
+
+class CustomerRegistry:
+    """
+    Klasa odpowiedzialna za zarządzanie bazą klientów wypożyczalni.
+    """
+    def __init__(self) -> None:
+        # Słownik, gdzie klucz to str (prawo jazdy), a wartość to obiekt Customer
+        self.customers: dict[str, Customer] = {}  
+
+    def register_customer(self, customer: Customer) -> None:
+        """Rejestruje nowego klienta w bazie danych."""
+        if not isinstance(customer, Customer):
+            raise TypeError("Można zarejestrować tylko obiekt klasy Customer")
+        if customer.license_number in self.customers:
+            raise ValueError(f"Klient o numerze {customer.license_number} już istnieje.")
+        self.customers[customer.license_number] = customer
+
+    def unregister_customer(self, license_number: str) -> None:
+        """Usuwa klienta z bazy na podstawie numeru prawa jazdy."""
+        if license_number in self.customers:
+            del self.customers[license_number]
+        else:
+            raise ValueError("Nie znaleziono klienta o podanym numerze prawa jazdy.")
+
+    def find_customer_by_license(self, license_number: str) -> Customer | None:
+        """Wyszukuje i zwraca klienta lub None, jeśli go nie ma."""
+        return self.customers.get(license_number, None)
+
+class Invoice:
+    """Dokument finansowy dla wypożyczenia."""
+
+    def __init__(self, amount: float):
+        self.amount = amount
+        self.is_paid = False
+        self.created_at = datetime.now()
+
+    def mark_as_paid(self):
+        """Zmienia status faktury na opłaconą."""
+        self.is_paid = True
+
+
+class Rental:
+    """Obiekt transakcji reprezentujący wypożyczenie."""
+
+    def __init__(self, customer: Customer, car: Car, days: int):
+        self.customer = customer
+        self.car = car
+        self.days = days
+        self.is_active = True
+
+    def calculate_total(self) -> float:
+        """Oblicza całkowity koszt wypożyczenia bazując na stawce dziennej."""
+        return self.car.daily_rate * self.days
+
+
+class RentalService:
+    """Główny serwis obsługujący logikę wypożyczeń i zwrotów."""
+
+    def __init__(self):
+        self.active_rentals = []
+
+    def rent_car(self, customer: Customer, car: Car, days: int) -> Rental:
+        """
+        Powiązuje klienta z samochodem.
+        Zmienia status auta, tworzy obiekt Rental i dodaje go do aktywnych wypożyczeń.
+        """
+        if car.status != CarStatus.AVAILABLE:
+            raise ValueError(f"Samochód {car.get_full_name()} nie jest dostępny do wypożyczenia.")
+        if days <= 0:
+            raise ValueError("Liczba dni wypożyczenia musi być większa niż 0.")
+
+        # Blokujemy samochód
+        car.change_status(CarStatus.RENTED)
+
+        # Tworzymy i zapisujemy transakcję
+        rental = Rental(customer, car, days)
+        self.active_rentals.append(rental)
+
+        return rental
+
+    def return_car(self, rental: Rental) -> Invoice:
+        """
+        Kończy wypożyczenie, odblokowuje samochód i wystawia rachunek.
+        """
+        if not rental.is_active:
+            raise ValueError("To wypożyczenie zostało już zakończone.")
+
+        # Odblokowujemy samochód
+        rental.car.change_status(CarStatus.AVAILABLE)
+        rental.is_active = False
+
+        if rental in self.active_rentals:
+            self.active_rentals.remove(rental)
+
+        # Wystawiamy fakturę
+        invoice = Invoice(rental.calculate_total())
+        return invoice
+
+
+class LoyaltyProgram:
+    """
+    Klasa, która zarządza programem lojalnościowym.
+    Śledzi liczbę zakończonych wypożyczeń klienta i przyznaje zniżki.
+    """
+
+    def __init__(self) -> None:
+        # Słownik, w którym kluczem jest numer prawa jazdy, a wartością liczba zakończonych wypożyczeń
+        self.rental_history: dict[str, int] = {}
+
+    def add_completed_rental(self, customer: Customer) -> None:
+        """Zwiększa licznik wypożyczeń klienta po udanym zwrocie samochodu."""
+        current_count = self.rental_history.get(customer.license_number, 0)
+        self.rental_history[customer.license_number] = current_count + 1
+
+    def calculate_discount(self, customer: Customer, base_amount: float) -> float:
+        """
+        Oblicza kwotę do zapłaty po uwzględnieniu ewentualnej zniżki.
+        - 3 do 4 wypożyczeń: 10% zniżki
+        - 5 i więcej wypożyczeń: 20% zniżki
+        """
+        rentals = self.rental_history.get(customer.license_number, 0)
+
+        if rentals >= 5:
+            discount = 0.20  # 20%
+        elif rentals >= 3:
+            discount = 0.10  # 10%
+        else:
+            discount = 0.0  # Brak zniżki
+
+        return base_amount * (1 - discount)
