@@ -1,4 +1,4 @@
-from src.models import Car, Customer, CarStatus
+from models import Car, Customer, CarStatus
 from datetime import datetime
 
 class FleetManager:
@@ -131,3 +131,35 @@ class RentalService:
         invoice = Invoice(rental.calculate_total())
         return invoice
 
+
+class LoyaltyProgram:
+    """
+    Klasa zarządzająca programem lojalnościowym.
+    Śledzi liczbę zakończonych wypożyczeń klienta i przyznaje zniżki.
+    """
+
+    def __init__(self) -> None:
+        # Słownik, w którym kluczem jest numer prawa jazdy, a wartością liczba zakończonych wypożyczeń
+        self.rental_history: dict[str, int] = {}
+
+    def add_completed_rental(self, customer: Customer) -> None:
+        """Zwiększa licznik wypożyczeń klienta po udanym zwrocie samochodu."""
+        current_count = self.rental_history.get(customer.license_number, 0)
+        self.rental_history[customer.license_number] = current_count + 1
+
+    def calculate_discount(self, customer: Customer, base_amount: float) -> float:
+        """
+        Oblicza kwotę do zapłaty po uwzględnieniu ewentualnej zniżki.
+        - 3 do 4 wypożyczeń: 10% zniżki
+        - 5 i więcej wypożyczeń: 20% zniżki
+        """
+        rentals = self.rental_history.get(customer.license_number, 0)
+
+        if rentals >= 5:
+            discount = 0.20  # 20%
+        elif rentals >= 3:
+            discount = 0.10  # 10%
+        else:
+            discount = 0.0  # Brak zniżki
+
+        return base_amount * (1 - discount)
