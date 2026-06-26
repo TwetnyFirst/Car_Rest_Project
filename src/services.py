@@ -134,7 +134,7 @@ class RentalService:
 
 class LoyaltyProgram:
     """
-    Klasa zarządzająca programem lojalnościowym.
+    Klasa, która zarządza programem lojalnościowym.
     Śledzi liczbę zakończonych wypożyczeń klienta i przyznaje zniżki.
     """
 
