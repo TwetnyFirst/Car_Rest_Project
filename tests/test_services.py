@@ -1,7 +1,7 @@
 import unittest
-from src.models import Car, Customer, CarStatus
-from src.services import FleetManager, CustomerRegistry
-from src.services import Rental, Invoice, RentalService
+from models import Car, Customer, CarStatus
+from services import FleetManager, CustomerRegistry
+from services import Rental, Invoice, RentalService, LoyaltyProgram
 
 class TestRentalProcessUnit(unittest.TestCase):
 
@@ -110,5 +110,55 @@ class TestLogisticsManager(unittest.TestCase):
         self.assertEqual(found.last_name, "Doe")
 
 
+class TestLoyaltyProgram(unittest.TestCase):
+
+    def setUp(self):
+
+        self.loyalty_program = LoyaltyProgram()
+        self.customer = Customer(
+            name="Anna",
+            last_name="Nowak",
+            email="anna@example.com",
+            phone="987-654",
+            license_number="DL98765"
+        )
+
+    def test_add_completed_rental(self):
+
+        # Początkowo klient nie powinien mieć żadnych wypożyczeń (historia zwraca 0)
+        initial_count = self.loyalty_program.rental_history.get(self.customer.license_number, 0)
+        self.assertEqual(initial_count, 0)
+
+        # Dodajemy pierwsze wypożyczenie
+        self.loyalty_program.add_completed_rental(self.customer)
+        self.assertEqual(self.loyalty_program.rental_history[self.customer.license_number], 1)
+
+        # Dodajemy drugie wypożyczenie i sprawdzamy, czy wartość wzrosła do 2
+        self.loyalty_program.add_completed_rental(self.customer)
+        self.assertEqual(self.loyalty_program.rental_history[self.customer.license_number], 2)
+
+    def test_calculate_discount(self):
+
+        base_amount = 100.0
+
+        # Scenariusz 1: 0 wypożyczeń -> brak zniżki (0%)
+        amount = self.loyalty_program.calculate_discount(self.customer, base_amount)
+        self.assertEqual(amount, 100.0)
+
+        # Scenariusz 2: 3 wypożyczenia -> zniżka 10%
+        for _ in range(3):
+            self.loyalty_program.add_completed_rental(self.customer)
+
+        amount = self.loyalty_program.calculate_discount(self.customer, base_amount)
+        self.assertEqual(amount, 90.0)  # 100 * 0.9
+
+        # Scenariusz 3: 5 wypożyczeń (dodajemy kolejne 2) -> zniżka 20%
+        for _ in range(2):
+            self.loyalty_program.add_completed_rental(self.customer)
+
+        amount = self.loyalty_program.calculate_discount(self.customer, base_amount)
+        self.assertEqual(amount, 80.0)  # 100 * 0.8
+
 if __name__ == '__main__':
     unittest.main()
+
